@@ -3031,7 +3031,12 @@ public class Symbol extends LispObject implements java.io.Serializable
     PACKAGE_MOP.addExternalSymbol("STANDARD-DIRECT-SLOT-DEFINITION");
   public static final Symbol STANDARD_EFFECTIVE_SLOT_DEFINITION =
     PACKAGE_MOP.addExternalSymbol("STANDARD-EFFECTIVE-SLOT-DEFINITION");
-  // MOP method combination readers.
+  public static final Symbol STANDARD_METHOD_COMBINATION =
+    PACKAGE_MOP.addExternalSymbol("STANDARD-METHOD-COMBINATION");
+  public static final Symbol SHORT_METHOD_COMBINATION =
+    PACKAGE_MOP.addExternalSymbol("SHORT-METHOD-COMBINATION");
+  public static final Symbol LONG_METHOD_COMBINATION =
+    PACKAGE_MOP.addExternalSymbol("LONG-METHOD-COMBINATION");
   public static final Symbol METHOD_COMBINATION_NAME =
     PACKAGE_MOP.addInternalSymbol("METHOD-COMBINATION-NAME");
   public static final Symbol METHOD_COMBINATION_DOCUMENTATION =
