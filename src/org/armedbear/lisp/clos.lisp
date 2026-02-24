@@ -948,16 +948,16 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
 
 (define-primordial-class method-combination (metaobject) ())
 
-(define-primordial-class standard-method-combination (method-combination)
+(define-primordial-class early-method-combination (method-combination)
   ((sys::name :initarg :name :initform nil)
    (sys::%documentation :initarg :documentation :initform nil)
    (options :initarg :options :initform nil)))
 
-(define-primordial-class short-method-combination (standard-method-combination)
+#+()(define-primordial-class short-method-combination (standard-method-combination)
   ((operator :initarg :operator)
    (identity-with-one-argument :initarg :identity-with-one-argument)))
 
-(define-primordial-class long-method-combination (standard-method-combination)
+#+()(define-primordial-class long-method-combination (standard-method-combination)
   ((sys::lambda-list :initarg :lambda-list)
    (method-group-specs :initarg :method-group-specs)
    (args-lambda-list :initarg :args-lambda-list)
@@ -1537,7 +1537,7 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
   (std-find-method-combination gf name options))
 
 (defconstant +the-standard-method-combination+
-  (let ((instance (std-allocate-instance (find-class 'standard-method-combination))))
+  (let ((instance (std-allocate-instance (find-class 'early-method-combination))))
     (setf (std-slot-value instance 'sys::name) 'standard)
     (setf (std-slot-value instance 'sys:%documentation)
           "The standard method combination.")
