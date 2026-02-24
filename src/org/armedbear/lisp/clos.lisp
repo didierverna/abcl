@@ -1931,6 +1931,8 @@ compare the method combination name to the symbol 'standard.")
       (setf method-combination
             (find-method-combination
              gf (car method-combination) (cdr method-combination))))
+    (setf (std-slot-value method-combination '%generic-functions)
+	  (push gf (std-slot-value method-combination '%generic-functions)))
     (setf (std-slot-value gf 'sys::name) name)
     (setf (std-slot-value gf 'sys::lambda-list) lambda-list)
     (setf (std-slot-value gf 'sys::initial-methods) ())
