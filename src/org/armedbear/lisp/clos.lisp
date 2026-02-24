@@ -1123,6 +1123,7 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
       (expand-long-defcombin name args)
       (expand-short-defcombin form)))
 
+#|
 (define-method-combination +      :identity-with-one-argument t)
 (define-method-combination and    :identity-with-one-argument t)
 (define-method-combination append :identity-with-one-argument nil)
@@ -1132,7 +1133,7 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
 (define-method-combination nconc  :identity-with-one-argument t)
 (define-method-combination or     :identity-with-one-argument t)
 (define-method-combination progn  :identity-with-one-argument t)
-
+|#
 ;;;
 ;;; long form of define-method-combination (from Sacla and XCL)
 ;;;
