@@ -1566,8 +1566,9 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
   (let ((instance (std-allocate-instance (find-class 'early-method-combination))))
     (setf (std-slot-value instance 'sys::name) 'standard)
     (setf (std-slot-value instance 'sys:%documentation)
-          "The standard method combination.")
+	  "The standard method combination.")
     (setf (std-slot-value instance 'options) nil)
+    (setf (std-slot-value instance '%generic-functions) nil)
     instance)
   "The standard method combination.
 Do not use this object for identity since it changes between
