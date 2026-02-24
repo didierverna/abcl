@@ -946,6 +946,7 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
   ((object :initform nil)
    (direct-methods :initform nil)))
 
+
 (define-primordial-class method-combination (metaobject) ())
 
 (define-primordial-class early-method-combination (method-combination)
@@ -953,11 +954,35 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
    (sys::%documentation :initarg :documentation :initform nil)
    (options :initarg :options :initform nil)))
 
-#+()(define-primordial-class short-method-combination (standard-method-combination)
+(define-primordial-class standard-method-combination (method-combination)
+  ((options :initarg :options)
+   (%generic-functions :initform nil)))
+
+(define-primordial-class short-method-combination (standard-method-combination)
+  ())
+
+(define-primordial-class long-method-combination (standard-method-combination)
+  ())
+
+(define-primordial-class method-combination-type (standard-class) ())
+
+(define-primordial-class standard-method-combination-type
+    (method-combination-type)
+  ((sys::%documentation :initarg :documentation :initform nil)
+   (type-name :initarg :type-name)
+   (lambda-list :initform nil :initarg :lambda-list)
+   (%constructor)
+   (%effective-method-builder
+    :initarg :effective-method-builder)
+   (%instances :initform (make-hash-table :test #'equal))))
+
+(define-primordial-class short-method-combination-type
+    (standard-method-combination-type)
   ((operator :initarg :operator)
    (identity-with-one-argument :initarg :identity-with-one-argument)))
 
-#+()(define-primordial-class long-method-combination (standard-method-combination)
+(define-primordial-class long-method-combination-type
+    (standard-method-combination-type)
   ((sys::lambda-list :initarg :lambda-list)
    (method-group-specs :initarg :method-group-specs)
    (args-lambda-list :initarg :args-lambda-list)
