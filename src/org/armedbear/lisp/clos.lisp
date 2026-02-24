@@ -950,9 +950,10 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
 (define-primordial-class method-combination (metaobject) ())
 
 (define-primordial-class early-method-combination (method-combination)
-  ((sys::name :initarg :name :initform nil)
-   (sys::%documentation :initarg :documentation :initform nil)
-   (options :initarg :options :initform nil)))
+  ((sys::name)
+   (sys::%documentation)
+   (options)
+   (%generic-functions)))
 
 (define-primordial-class standard-method-combination (method-combination)
   ((options :initarg :options)
