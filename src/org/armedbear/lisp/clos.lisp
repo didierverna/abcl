@@ -1524,7 +1524,7 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
 (defun find-method-combination (gf name options)
   (std-find-method-combination gf name options))
 
-(defconstant +the-standard-method-combination+
+(defparameter *the-standard-method-combination*
   (let ((instance (std-allocate-instance (find-class 'early-method-combination))))
     (setf (std-slot-value instance 'sys::name) 'standard)
     (setf (std-slot-value instance 'sys:%documentation)
@@ -1532,11 +1532,8 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
     (setf (std-slot-value instance 'options) nil)
     (setf (std-slot-value instance '%generic-functions) nil)
     instance)
-  "The standard method combination.
-Do not use this object for identity since it changes between
-compile-time and run-time.  To detect the standard method combination,
-compare the method combination name to the symbol 'standard.")
-(setf (get 'standard 'method-combination-object) +the-standard-method-combination+)
+  "The standard method combination.")
+(setf (get 'standard 'method-combination-object) *the-standard-method-combination*)
 
 (define-funcallable-primordial-class standard-generic-function (generic-function)
   ((sys::name :initarg :name :initform nil)
@@ -1548,7 +1545,7 @@ compare the method combination name to the symbol 'standard.")
    (sys::method-class :initarg :method-class
                       :initform +the-standard-method-class+)
    (sys::%method-combination :initarg :method-combination
-                             :initform +the-standard-method-combination+)
+                             :initform *the-standard-method-combination*)
    (sys::argument-precedence-order :initarg :argument-precedence-order
                                    :initform nil)
    (sys::declarations :initarg :declarations :initform nil)
@@ -1802,7 +1799,7 @@ compare the method combination name to the symbol 'standard.")
                                 (lambda-list nil lambda-list-supplied-p)
                                 (generic-function-class +the-standard-generic-function-class+)
                                 (method-class +the-standard-method-class+)
-                                (method-combination +the-standard-method-combination+ mc-p)
+                                (method-combination *the-standard-method-combination* mc-p)
                                 argument-precedence-order
                                 (documentation nil documentation-supplied-p)
                                 &allow-other-keys)
@@ -1880,7 +1877,7 @@ compare the method combination name to the symbol 'standard.")
 (defun make-instance-standard-generic-function (generic-function-class
                                                 &key name lambda-list
                                                 (method-class +the-standard-method-class+)
-                                                (method-combination +the-standard-method-combination+)
+                                                (method-combination *the-standard-method-combination*)
                                                 argument-precedence-order
                                                 declarations
                                                 documentation)
@@ -4520,7 +4517,7 @@ found. Otherwise, return NIL."
 	       :documentation "The standard method combination type."))
        (smc (make-instance ssmc :options nil)))
   (setf (method-combination-%generic-functions smc)
-	(std-slot-value +the-standard-method-combination+ '%generic-functions))
+	(std-slot-value *the-standard-method-combination* '%generic-functions))
   (setf (gethash nil (method-combination-type-%instances ssmc)) smc)
   (setf (gethash 'standard *method-combination-types*) ssmc))
 
