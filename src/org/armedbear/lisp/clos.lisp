@@ -2354,9 +2354,11 @@ Initialized with the true value near the end of the file.")
              (cond
                ((= number-required 1)
                 (cond
-                  ((and (eq (method-combination-name
-                             (std-slot-value gf 'sys::%method-combination))
-                            'standard)
+                  ((and #+()(eq (method-combination-name
+				 (std-slot-value gf 'sys::%method-combination))
+				'standard)
+			(eq (std-slot-value gf 'sys::%method-combination)
+			    *the-standard-method-combination*)
                         (= (length methods) 1)
                         (std-method-fast-function (%car methods)))
                    (let* ((method (%car methods))
