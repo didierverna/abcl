@@ -2305,12 +2305,6 @@ Initialized with the true value near the end of the file.")
         (error "No such method for ~S." (generic-function-name gf))
         method)))
 
-(defun fast-callable-p (gf)
-  (and (eq (method-combination-name (generic-function-method-combination gf))
-           'standard)
-       (null (intersection (generic-function-lambda-list gf)
-                           '(&rest &optional &key &allow-other-keys &aux)))))
-
 (defun std-compute-discriminating-function (gf)
   ;; In this function, we know that gf is of class
   ;; standard-generic-function, so we can access the instance's slots
