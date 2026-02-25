@@ -955,44 +955,6 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
    (options)
    (%generic-functions)))
 
-(define-primordial-class standard-method-combination (method-combination)
-  ((options :initarg :options)
-   (%generic-functions :initform nil)))
-
-(define-primordial-class short-method-combination (standard-method-combination)
-  ())
-
-(define-primordial-class long-method-combination (standard-method-combination)
-  ())
-
-(define-primordial-class method-combination-type (standard-class) ())
-
-(define-primordial-class standard-method-combination-type
-    (method-combination-type)
-  ((sys::%documentation :initarg :documentation :initform nil)
-   (type-name :initarg :type-name)
-   (lambda-list :initform nil :initarg :lambda-list)
-   (%constructor)
-   (%effective-method-builder
-    :initarg :effective-method-builder)
-   (%instances :initform (make-hash-table :test #'equal))))
-
-(define-primordial-class short-method-combination-type
-    (standard-method-combination-type)
-  ((operator :initarg :operator)
-   (identity-with-one-argument :initarg :identity-with-one-argument)))
-
-(define-primordial-class long-method-combination-type
-    (standard-method-combination-type)
-  ((sys::lambda-list :initarg :lambda-list)
-   (method-group-specs :initarg :method-group-specs)
-   (args-lambda-list :initarg :args-lambda-list)
-   (generic-function-symbol :initarg :generic-function-symbol)
-   (function :initarg :function)
-   (arguments :initarg :arguments)
-   (declarations :initarg :declarations)
-   (forms :initarg :forms)))
-
 (define-primordial-class standard-accessor-method (standard-method)
   ((sys::%slot-definition :initarg :slot-definition :initform nil)))
 
@@ -4490,6 +4452,84 @@ or T when any keyword is acceptable due to presence of
 (atomic-defgeneric find-method-combination (gf name options)
   (:method (gf (name symbol) options)
     (std-find-method-combination gf name options)))
+
+(defclass standard-method-combination (method-combination)
+  ((options :initarg :options :reader method-combination-options)
+   (%generic-functions
+    :initform nil
+    :accessor method-combination-%generic-functions)))
+
+(defclass short-method-combination (standard-method-combination)
+  ())
+
+(defclass long-method-combination (standard-method-combination)
+  ())
+
+(defclass method-combination-type (standard-class) ())
+
+(defclass standard-method-combination-type (method-combination-type)
+  ((type-name
+    :initarg :type-name
+    :reader method-combination-type-name)
+   (lambda-list
+    :initform nil
+    :initarg :lambda-list
+    :reader method-combination-type-lambda-list)
+   (%constructor
+    ;; A reader without "type" in the name seems more readable to me.
+    :reader method-combination-%constructor)
+   (%effective-method-builder
+    :initarg :effective-method-builder
+    :reader method-combination-type-%effective-method-builder)
+   (%instances
+    :initform (make-hash-table :test #'equal)
+    :reader method-combination-type-%instances)
+   (sys::%documentation
+    :initarg :documentation
+    :initform nil)))
+
+(defclass short-method-combination-type (standard-method-combination-type)
+  ((operator
+    :initarg :operator
+    :reader short-method-combination-type-operator)
+   (identity-with-one-argument
+    :initarg :identity-with-one-argument
+    :reader short-method-combination-type-identity-with-one-argument)))
+
+(defclass long-method-combination-type (standard-method-combination-type)
+  ((sys::lambda-list :initarg :lambda-list)
+   (method-group-specs :initarg :method-group-specs)
+   (args-lambda-list :initarg :args-lambda-list)
+   (generic-function-symbol :initarg :generic-function-symbol)
+   (function :initarg :function)
+   (arguments :initarg :arguments)
+   (declarations :initarg :declarations)
+   (forms :initarg :forms)))
+
+(defparameter *method-combination-types* (make-hash-table))
+
+(defun find-method-combination-type (name &optional (errorp t))
+  "Find a NAMEd method combination type.
+If ERRORP (the default), signal an error if no such method combination type is
+found. Otherwise, return NIL."
+  (or (gethash name *method-combination-types*)
+      (when errorp
+	(error "There is no method combination type named ~A." name))))
+
+(defmethod validate-superclass
+    ((class standard-method-combination-type) (superclass standard-class))
+  t)
+
+(let* ((ssmc (make-instance 'standard-method-combination-type
+	       :direct-superclasses (list (find-class 'standard-method-combination))
+	       :type-name 'standard
+	       :documentation "The standard method combination type."))
+       (smc (make-instance ssmc :options nil)))
+  (setf (method-combination-%generic-functions smc)
+	(std-slot-value +the-standard-method-combination+ '%generic-functions))
+  (setf (gethash nil (method-combination-type-%instances ssmc)) smc)
+  (setf (gethash 'standard *method-combination-types*) ssmc))
+
 
 ;;; specializer-direct-method and friends.
 
