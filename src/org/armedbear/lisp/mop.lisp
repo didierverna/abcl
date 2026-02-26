@@ -31,6 +31,95 @@
             "Class ~S is not compatible with superclass ~S"
             instance superclass)))
 
+
+;;; Full-blown method combinations.
+
+(defclass standard-method-combination (method-combination)
+  ((options :initarg :options :reader method-combination-options)
+   (%generic-functions
+    :initform nil
+    :accessor method-combination-%generic-functions)))
+
+(defclass short-method-combination (standard-method-combination)
+  ())
+
+(defclass long-method-combination (standard-method-combination)
+  ())
+
+(defclass method-combination-type (standard-class) ())
+
+(defclass standard-method-combination-type (method-combination-type)
+  ((type-name
+    :initarg :type-name
+    :reader method-combination-type-name)
+   (lambda-list
+    :initform nil
+    :initarg :lambda-list
+    :reader method-combination-type-lambda-list)
+   (%constructor
+    ;; A reader without "type" in the name seems more readable to me.
+    :reader method-combination-%constructor)
+   (%effective-method-builder
+    :initarg :effective-method-builder
+    :reader method-combination-type-%effective-method-builder)
+   (%instances
+    :initform (make-hash-table :test #'equal)
+    :reader method-combination-type-%instances)
+   (sys::%documentation
+    :initarg :documentation
+    :initform nil)))
+
+(defclass short-method-combination-type (standard-method-combination-type)
+  ((operator
+    :initarg :operator
+    :reader short-method-combination-type-operator)
+   (identity-with-one-argument
+    :initarg :identity-with-one-argument
+    :reader short-method-combination-type-identity-with-one-argument)))
+
+(defclass long-method-combination-type (standard-method-combination-type)
+  ((sys::lambda-list :initarg :lambda-list)
+   (method-group-specs :initarg :method-group-specs)
+   (args-lambda-list :initarg :args-lambda-list)
+   (generic-function-symbol :initarg :generic-function-symbol)
+   (function :initarg :function)
+   (arguments :initarg :arguments)
+   (declarations :initarg :declarations)
+   (forms :initarg :forms)))
+
+(defparameter *method-combination-types* (make-hash-table))
+
+(defun find-method-combination-type (name &optional (errorp t))
+  "Find a NAMEd method combination type.
+If ERRORP (the default), signal an error if no such method combination type is
+found. Otherwise, return NIL."
+  (or (gethash name *method-combination-types*)
+      (when errorp
+	(error "There is no method combination type named ~A." name))))
+
+(defmethod validate-superclass
+    ((class standard-method-combination-type) (superclass standard-class))
+  t)
+
+(let* ((ssmc (make-instance 'standard-method-combination-type
+	       :direct-superclasses (list (find-class 'standard-method-combination))
+	       :type-name 'standard
+	       :documentation "The standard method combination type."))
+       (smc (make-instance ssmc :options nil)))
+  (setf (method-combination-%generic-functions smc)
+	(std-slot-value *the-standard-method-combination* '%generic-functions))
+  (setf (gethash nil (method-combination-type-%instances ssmc)) smc)
+  (setf (gethash 'standard *method-combination-types*) ssmc)
+  (setq *the-standard-method-combination* smc)
+  (setf (get 'standard 'method-combination-object)
+	*the-standard-method-combination*)
+  ;;  (print "### Size of cache:")
+  ;;  (princ (length (method-combination-%generic-functions smc)))
+  ;;  (terpri)
+  #+()(mapc (lambda (gf) (setf (std-slot-value gf 'sys::%method-combination) smc))
+    (method-combination-%generic-functions smc)))
+
+
 (export '(;; classes
           funcallable-standard-object
           funcallable-standard-class

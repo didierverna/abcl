@@ -2354,11 +2354,10 @@ Initialized with the true value near the end of the file.")
              (cond
                ((= number-required 1)
                 (cond
-                  ((and #+()(eq (method-combination-name
-				 (std-slot-value gf 'sys::%method-combination))
-				'standard)
-			(eq (std-slot-value gf 'sys::%method-combination)
-			    *the-standard-method-combination*)
+                  ((and (let ((mc (std-slot-value gf 'sys::%method-combination)))
+			  ;; #### FIXME: we need this until full injection works.
+			  (or (typep mc 'early-method-combination)
+			      (eq mc *the-standard-method-combination*)))
                         (= (length methods) 1)
                         (std-method-fast-function (%car methods)))
                    (let* ((method (%car methods))
@@ -2636,7 +2635,13 @@ to ~S with argument list ~S."
 
 (defun std-compute-effective-method (gf method-combination methods)
   (assert (typep method-combination 'method-combination))
-  (let* ((mc-name (method-combination-name method-combination))
+  (let* ((mc-name
+	   ;; Make this work on the early standard method combination.
+	   ;; #### FIXME: this can't work until full injection works.
+	   (if #+()(eq method-combination *the-standard-method-combination*)
+	       (typep method-combination 'early-method-combination)
+	     'standard
+	     (method-combination-type-name (class-of method-combination))))
          (options (slot-value method-combination 'options))
          (order (car options))
          (primaries '())
@@ -4445,83 +4450,6 @@ or T when any keyword is acceptable due to presence of
 (atomic-defgeneric find-method-combination (gf name options)
   (:method (gf (name symbol) options)
     (std-find-method-combination gf name options)))
-
-(defclass standard-method-combination (method-combination)
-  ((options :initarg :options :reader method-combination-options)
-   (%generic-functions
-    :initform nil
-    :accessor method-combination-%generic-functions)))
-
-(defclass short-method-combination (standard-method-combination)
-  ())
-
-(defclass long-method-combination (standard-method-combination)
-  ())
-
-(defclass method-combination-type (standard-class) ())
-
-(defclass standard-method-combination-type (method-combination-type)
-  ((type-name
-    :initarg :type-name
-    :reader method-combination-type-name)
-   (lambda-list
-    :initform nil
-    :initarg :lambda-list
-    :reader method-combination-type-lambda-list)
-   (%constructor
-    ;; A reader without "type" in the name seems more readable to me.
-    :reader method-combination-%constructor)
-   (%effective-method-builder
-    :initarg :effective-method-builder
-    :reader method-combination-type-%effective-method-builder)
-   (%instances
-    :initform (make-hash-table :test #'equal)
-    :reader method-combination-type-%instances)
-   (sys::%documentation
-    :initarg :documentation
-    :initform nil)))
-
-(defclass short-method-combination-type (standard-method-combination-type)
-  ((operator
-    :initarg :operator
-    :reader short-method-combination-type-operator)
-   (identity-with-one-argument
-    :initarg :identity-with-one-argument
-    :reader short-method-combination-type-identity-with-one-argument)))
-
-(defclass long-method-combination-type (standard-method-combination-type)
-  ((sys::lambda-list :initarg :lambda-list)
-   (method-group-specs :initarg :method-group-specs)
-   (args-lambda-list :initarg :args-lambda-list)
-   (generic-function-symbol :initarg :generic-function-symbol)
-   (function :initarg :function)
-   (arguments :initarg :arguments)
-   (declarations :initarg :declarations)
-   (forms :initarg :forms)))
-
-(defparameter *method-combination-types* (make-hash-table))
-
-(defun find-method-combination-type (name &optional (errorp t))
-  "Find a NAMEd method combination type.
-If ERRORP (the default), signal an error if no such method combination type is
-found. Otherwise, return NIL."
-  (or (gethash name *method-combination-types*)
-      (when errorp
-	(error "There is no method combination type named ~A." name))))
-
-(defmethod validate-superclass
-    ((class standard-method-combination-type) (superclass standard-class))
-  t)
-
-(let* ((ssmc (make-instance 'standard-method-combination-type
-	       :direct-superclasses (list (find-class 'standard-method-combination))
-	       :type-name 'standard
-	       :documentation "The standard method combination type."))
-       (smc (make-instance ssmc :options nil)))
-  (setf (method-combination-%generic-functions smc)
-	(std-slot-value *the-standard-method-combination* '%generic-functions))
-  (setf (gethash nil (method-combination-type-%instances ssmc)) smc)
-  (setf (gethash 'standard *method-combination-types*) ssmc))
 
 
 ;;; specializer-direct-method and friends.
