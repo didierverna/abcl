@@ -111,13 +111,11 @@ found. Otherwise, return NIL."
   (setf (gethash nil (method-combination-type-%instances ssmc)) smc)
   (setf (gethash 'standard *method-combination-types*) ssmc)
   (setq *the-standard-method-combination* smc)
-  (setf (get 'standard 'method-combination-object)
-	*the-standard-method-combination*)
   ;;  (print "### Size of cache:")
   ;;  (princ (length (method-combination-%generic-functions smc)))
   ;;  (terpri)
   #+()(mapc (lambda (gf) (setf (std-slot-value gf 'sys::%method-combination) smc))
-    (method-combination-%generic-functions smc)))
+	(method-combination-%generic-functions smc)))
 
 
 (export '(;; classes

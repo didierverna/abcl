@@ -1481,38 +1481,50 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
                  :function (coerce-to-function lambda-expression) initargs))
     name))
 
+;; #### NOTE: ABCL historically signals an error if a method combination is
+;; not found here whereas SBCL just returns NIL (but later on, complains that
+;; NIL is not a method combination object). The MOP says nothing about the
+;; behavior of this function, so we just follow the original behavior.
 (defun std-find-method-combination (gf name options)
+  "Find a method combination object for type NAME and OPTIONS.
+If no method combination type exists by that NAME, signal an error.
+Otherwise, a (potentially new) method combination object is returned.
+The GENERIC-FUNCTION argument is ignored."
   (declare (ignore gf))
-  (when (and (eql name 'standard) options)
-    ;; CLHS DEFGENERIC
-    (error "The standard method combination does not accept any arguments."))
-  (let ((mc (get name 'method-combination-object)))
-    (cond
-      ((null mc) (error "Method combination ~S not found" name))
-      ((null options) mc)
-      ((typep mc 'short-method-combination)
-       (make-instance
-        'short-method-combination
-        :name name
-        :documentation (method-combination-documentation mc)
-        :operator (short-method-combination-operator mc)
-        :identity-with-one-argument
-        (short-method-combination-identity-with-one-argument mc)
-        :options options))
-      ((typep mc 'long-method-combination)
-       (make-instance
-        'long-method-combination
-        :name name
-        :documentation (method-combination-documentation mc)
-        :lambda-list (long-method-combination-lambda-list mc)
-        :method-group-specs (long-method-combination-method-group-specs mc)
-        :args-lambda-list (long-method-combination-args-lambda-list mc)
-        :generic-function-symbol (long-method-combination-generic-function-symbol mc)
-        :function (long-method-combination-function mc)
-        :arguments (long-method-combination-arguments mc)
-        :declarations (long-method-combination-declarations mc)
-        :forms (long-method-combination-forms mc)
-        :options options)))))
+  (cond ((eql name 'standard) ;; Make this work on the early MC.
+	 (when options
+	   (error
+	    "The standard method combination does not accept any arguments."))
+	 *the-standard-method-combination*)
+	(t
+	 (let ((type (find-method-combination-type name)))
+	   (or (gethash options (method-combination-type-%instances type))
+	       (setf (gethash options (method-combination-type-%instances type))
+		     (funcall (method-combination-%constructor type) options)))))))
+
+#+()((typep mc 'short-method-combination)
+ (make-instance
+  'short-method-combination
+  :name name
+  :documentation (method-combination-documentation mc)
+  :operator (short-method-combination-operator mc)
+  :identity-with-one-argument
+  (short-method-combination-identity-with-one-argument mc)
+  :options options))
+#+()((typep mc 'long-method-combination)
+ (make-instance
+  'long-method-combination
+  :name name
+  :documentation (method-combination-documentation mc)
+  :lambda-list (long-method-combination-lambda-list mc)
+  :method-group-specs (long-method-combination-method-group-specs mc)
+  :args-lambda-list (long-method-combination-args-lambda-list mc)
+  :generic-function-symbol (long-method-combination-generic-function-symbol mc)
+  :function (long-method-combination-function mc)
+  :arguments (long-method-combination-arguments mc)
+  :declarations (long-method-combination-declarations mc)
+  :forms (long-method-combination-forms mc)
+  :options options))
 
 (declaim (notinline find-method-combination))
 (defun find-method-combination (gf name options)
@@ -1524,7 +1536,6 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
     (setf (std-slot-value instance '%generic-functions) nil)
     instance)
   "The standard method combination.")
-(setf (get 'standard 'method-combination-object) *the-standard-method-combination*)
 
 (define-funcallable-primordial-class standard-generic-function (generic-function)
   ((sys::name :initarg :name :initform nil)
