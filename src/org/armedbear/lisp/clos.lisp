@@ -950,9 +950,7 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
 (define-primordial-class method-combination (metaobject) ())
 
 (define-primordial-class early-method-combination (method-combination)
-  ((sys::name)
-   (sys::%documentation)
-   (options)
+  ((options)
    (%generic-functions)))
 
 (define-primordial-class standard-accessor-method (standard-method)
@@ -1035,10 +1033,6 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
     (setf (std-slot-value instance 'forms) forms)
     (setf (std-slot-value instance 'options) nil)
     instance))
-
-(defun method-combination-name (method-combination)
-  (check-type method-combination method-combination)
-  (std-slot-value method-combination 'sys::name))
 
 (defun method-combination-documentation (method-combination)
   (check-type method-combination method-combination)
@@ -1526,9 +1520,6 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
 
 (defparameter *the-standard-method-combination*
   (let ((instance (std-allocate-instance (find-class 'early-method-combination))))
-    (setf (std-slot-value instance 'sys::name) 'standard)
-    (setf (std-slot-value instance 'sys:%documentation)
-	  "The standard method combination.")
     (setf (std-slot-value instance 'options) nil)
     (setf (std-slot-value instance '%generic-functions) nil)
     instance)
