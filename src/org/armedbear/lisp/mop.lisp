@@ -40,6 +40,24 @@
     :initform nil
     :accessor method-combination-%generic-functions)))
 
+(defmethod update-generic-function-for-redefined-method-combination
+    ((function standard-generic-function)
+     (previous standard-method-combination)
+     (current standard-method-combination))
+  "Reinitialize FUNCTION."
+  (reinitialize-instance function))
+
+(defmethod update-instance-for-different-class :after
+    ((previous standard-method-combination)
+     (current standard-method-combination)
+     &key &allow-other-keys)
+  "Inform every generic function that its method combination has changed."
+  (mapc
+   (lambda (function)
+     (update-generic-function-for-redefined-method-combination
+      function previous current))
+   (method-combination-%generic-functions current)))
+
 (defclass short-method-combination (standard-method-combination)
   ())
 
@@ -77,6 +95,12 @@
     :initarg :identity-with-one-argument
     :reader short-method-combination-type-identity-with-one-argument)))
 
+(defmethod validate-superclass
+    ((class short-method-combination-type) (superclass standard-class))
+  "Validate the creation of method combinations implemented as
+SHORT-METHOD-COMBINATION-TYPE."
+  (subtypep superclass 'short-method-combination))
+
 (defclass long-method-combination-type (standard-method-combination-type)
   ((sys::lambda-list :initarg :lambda-list)
    (method-group-specs :initarg :method-group-specs)
@@ -86,6 +110,13 @@
    (arguments :initarg :arguments)
    (declarations :initarg :declarations)
    (forms :initarg :forms)))
+
+(defmethod validate-superclass
+    ((class long-method-combination-type) (superclass standard-class))
+  "Validate the creation of method combinations implemented as
+LONG-METHOD-COMBINATION-TYPE."
+  (subtypep superclass 'long-method-combination))
+
 
 (defparameter *method-combination-types* (make-hash-table))
 
@@ -116,6 +147,7 @@ found. Otherwise, return NIL."
   ;;  (terpri)
   #+()(mapc (lambda (gf) (setf (std-slot-value gf 'sys::%method-combination) smc))
 	(method-combination-%generic-functions smc)))
+
 
 
 (export '(;; classes
@@ -202,8 +234,15 @@ found. Otherwise, return NIL."
           add-direct-method
           remove-direct-method
 
+	  standard-method-combination
+	  short-method-combination
+	  long-method-combination
+	  method-combination-type
+	  standard-method-combination-type
+	  short-method-combination-type
+	  long-method-combination-type
           find-method-combination
-
+	  update-generic-function-for-redefined-method-combination
           extract-lambda-list
           extract-specializer-names
 
