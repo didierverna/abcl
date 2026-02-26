@@ -58,11 +58,6 @@
       function previous current))
    (method-combination-%generic-functions current)))
 
-(defclass short-method-combination (standard-method-combination)
-  ())
-
-(defclass long-method-combination (standard-method-combination)
-  ())
 
 (defclass method-combination-type (standard-class) ())
 
@@ -77,9 +72,6 @@
    (%constructor
     ;; A reader without "type" in the name seems more readable to me.
     :reader method-combination-%constructor)
-   (%effective-method-builder
-    :initarg :effective-method-builder
-    :reader method-combination-type-%effective-method-builder)
    (%instances
     :initform (make-hash-table :test #'equal)
     :reader method-combination-type-%instances)
@@ -87,8 +79,39 @@
     :initarg :documentation
     :initform nil)))
 
+
+(defparameter *method-combination-types* (make-hash-table))
+
+(defun find-method-combination-type (name &optional (errorp t))
+  "Find a NAMEd method combination type.
+If ERRORP (the default), signal an error if no such method combination type is
+found. Otherwise, return NIL."
+  (or (gethash name *method-combination-types*)
+      (when errorp
+	(error "There is no method combination type named ~A." name))))
+
+(defun install-method-combination-type
+    (name new &aux (old (find-method-combination-type name nil)))
+  "Register NEW method combination type under NAME.
+This function takes care of any potential redefinition of an existing method
+combination type."
+  (when old
+    (setf (slot-value new '%instances) (method-combination-type-%instances old))
+    (maphash (lambda (options combination)
+	       (declare (ignore options))
+	       (change-class combination new))
+	     (method-combination-type-%instances new)))
+  (setf (gethash name *method-combination-types*) new)
+  name)
+
+
+(defclass short-method-combination (standard-method-combination)
+  ())
+
 (defclass short-method-combination-type (standard-method-combination-type)
-  ((operator
+  ((lambda-list ; slot override
+    :initform '(&optional (order :most-specific-first)))
+   (operator
     :initarg :operator
     :reader short-method-combination-type-operator)
    (identity-with-one-argument
@@ -101,6 +124,40 @@
 SHORT-METHOD-COMBINATION-TYPE."
   (subtypep superclass 'short-method-combination))
 
+(defun expand-short-defcombin (whole)
+  (let* ((name (cadr whole))
+	 (documentation
+	   (getf (cddr whole) :documentation ""))
+	 (identity-with-one-argument
+	   (getf (cddr whole) :identity-with-one-argument nil))
+	 (operator
+	   (getf (cddr whole) :operator name))
+	 (mc-class
+	   (getf (cddr whole) :method-combination-class
+		 'short-method-combination))
+	 (mct-spec (getf (cddr whole) :method-combination-type-class
+			 '(short-method-combination-type))))
+    (unless (listp mct-spec) (setq mct-spec (list mct-spec)))
+    `(let* ((.mc-class. (find-class ',mc-class))
+	    (.mct-class. (find-class (car ',mct-spec)))
+	    ;; #### NOTE: we can't change-class class metaobjects, so we need
+	    ;; to recreate a brand new one. -- didier
+	    (.new. (apply #'make-instance .mct-class.
+			  :direct-superclasses (list .mc-class.)
+			  :type-name ',name
+			  :operator ',operator
+			  :identity-with-one-argument ',identity-with-one-argument
+			  (cdr ',mct-spec))))
+       (setf (slot-value .new. 'sys:%documentation) ',documentation)
+       (setf (slot-value .new. '%constructor)
+	     (lambda (options) (make-instance .new. :options options)))
+       (install-method-combination-type ',name .new.))))
+
+
+
+(defclass long-method-combination (standard-method-combination)
+  ())
+
 (defclass long-method-combination-type (standard-method-combination-type)
   ((sys::lambda-list :initarg :lambda-list)
    (method-group-specs :initarg :method-group-specs)
@@ -110,6 +167,9 @@ SHORT-METHOD-COMBINATION-TYPE."
    (arguments :initarg :arguments)
    (declarations :initarg :declarations)
    (forms :initarg :forms)))
+#+()   (%effective-method-builder
+    :initarg :effective-method-builder
+    :reader method-combination-type-%effective-method-builder)
 
 (defmethod validate-superclass
     ((class long-method-combination-type) (superclass standard-class))
@@ -117,16 +177,6 @@ SHORT-METHOD-COMBINATION-TYPE."
 LONG-METHOD-COMBINATION-TYPE."
   (subtypep superclass 'long-method-combination))
 
-
-(defparameter *method-combination-types* (make-hash-table))
-
-(defun find-method-combination-type (name &optional (errorp t))
-  "Find a NAMEd method combination type.
-If ERRORP (the default), signal an error if no such method combination type is
-found. Otherwise, return NIL."
-  (or (gethash name *method-combination-types*)
-      (when errorp
-	(error "There is no method combination type named ~A." name))))
 
 (defmethod validate-superclass
     ((class standard-method-combination-type) (superclass standard-class))
@@ -147,6 +197,22 @@ found. Otherwise, return NIL."
   ;;  (terpri)
   #+()(mapc (lambda (gf) (setf (std-slot-value gf 'sys::%method-combination) smc))
 	(method-combination-%generic-functions smc)))
+
+
+(defmacro define-method-combination (&whole form name &rest args)
+  (if (and (cddr form) (listp (caddr form)))
+      (expand-long-defcombin name args)
+      (expand-short-defcombin form)))
+
+(define-method-combination +      :identity-with-one-argument t)
+(define-method-combination and    :identity-with-one-argument t)
+(define-method-combination append :identity-with-one-argument nil)
+(define-method-combination list   :identity-with-one-argument nil)
+(define-method-combination max    :identity-with-one-argument t)
+(define-method-combination min    :identity-with-one-argument t)
+(define-method-combination nconc  :identity-with-one-argument t)
+(define-method-combination or     :identity-with-one-argument t)
+(define-method-combination progn  :identity-with-one-argument t)
 
 
 

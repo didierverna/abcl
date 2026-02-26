@@ -1079,43 +1079,6 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
   (std-slot-value method-combination 'forms))
 
 
-(defun expand-short-defcombin (whole)
-  (let* ((name (cadr whole))
-         (documentation
-          (getf (cddr whole) :documentation ""))
-         (identity-with-one-arg
-          (getf (cddr whole) :identity-with-one-argument nil))
-         (operator
-          (getf (cddr whole) :operator name)))
-    `(progn
-       (let ((instance (std-allocate-instance
-                        (find-class 'short-method-combination))))
-         (setf (std-slot-value instance 'sys::name) ',name)
-         (setf (std-slot-value instance 'sys:%documentation) ',documentation)
-         (setf (std-slot-value instance 'operator) ',operator)
-         (setf (std-slot-value instance 'identity-with-one-argument)
-               ',identity-with-one-arg)
-         (setf (std-slot-value instance 'options) nil)
-         (setf (get ',name 'method-combination-object) instance)
-         ',name))))
-
-(defmacro define-method-combination (&whole form name &rest args)
-  (if (and (cddr form)
-           (listp (caddr form)))
-      (expand-long-defcombin name args)
-      (expand-short-defcombin form)))
-
-#|
-(define-method-combination +      :identity-with-one-argument t)
-(define-method-combination and    :identity-with-one-argument t)
-(define-method-combination append :identity-with-one-argument nil)
-(define-method-combination list   :identity-with-one-argument nil)
-(define-method-combination max    :identity-with-one-argument t)
-(define-method-combination min    :identity-with-one-argument t)
-(define-method-combination nconc  :identity-with-one-argument t)
-(define-method-combination or     :identity-with-one-argument t)
-(define-method-combination progn  :identity-with-one-argument t)
-|#
 ;;;
 ;;; long form of define-method-combination (from Sacla and XCL)
 ;;;
@@ -1502,15 +1465,6 @@ The GENERIC-FUNCTION argument is ignored."
 	       (setf (gethash options (method-combination-type-%instances type))
 		     (funcall (method-combination-%constructor type) options)))))))
 
-#+()((typep mc 'short-method-combination)
- (make-instance
-  'short-method-combination
-  :name name
-  :documentation (method-combination-documentation mc)
-  :operator (short-method-combination-operator mc)
-  :identity-with-one-argument
-  (short-method-combination-identity-with-one-argument mc)
-  :options options))
 #+()((typep mc 'long-method-combination)
  (make-instance
   'long-method-combination
@@ -2726,8 +2680,9 @@ to ~S with argument list ~S."
       (t
        (unless (typep method-combination 'short-method-combination)
          (error "Unsupported method combination type ~A." mc-name))
-       (let ((operator (short-method-combination-operator method-combination))
-             (ioa (short-method-combination-identity-with-one-argument method-combination)))
+       (let* ((mct (class-of method-combination))
+	      (operator (short-method-combination-type-operator mct))
+              (ioa (short-method-combination-type-identity-with-one-argument mct)))
          (setf emf-form
                (if (and ioa (null (cdr primaries)))
                    (generate-emf-lambda (method-function (car primaries)) nil)
