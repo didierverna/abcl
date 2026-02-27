@@ -159,23 +159,99 @@ SHORT-METHOD-COMBINATION-TYPE."
   ())
 
 (defclass long-method-combination-type (standard-method-combination-type)
-  ((sys::lambda-list :initarg :lambda-list)
-   (method-group-specs :initarg :method-group-specs)
-   (args-lambda-list :initarg :args-lambda-list)
-   (generic-function-symbol :initarg :generic-function-symbol)
-   (function :initarg :function)
-   (arguments :initarg :arguments)
-   (declarations :initarg :declarations)
-   (forms :initarg :forms)))
-#+()   (%effective-method-builder
+  ((%effective-method-builder
     :initarg :effective-method-builder
-    :reader method-combination-type-%effective-method-builder)
+    :reader long-method-combination-type-%effective-method-builder)))
 
 (defmethod validate-superclass
     ((class long-method-combination-type) (superclass standard-class))
   "Validate the creation of method combinations implemented as
 LONG-METHOD-COMBINATION-TYPE."
   (subtypep superclass 'long-method-combination))
+
+(defun expand-long-defcombin (name args)
+  (destructuring-bind (lambda-list method-groups &rest body) args
+    `(apply #'define-long-form-method-combination
+       ',name
+       ',lambda-list
+       (list ,@(mapcar #'canonicalize-method-group-spec method-groups))
+       ',body)))
+
+(defun define-long-form-method-combination
+    (name lambda-list method-group-specs &rest args)
+  (let* ((initargs `(:name ,name
+		     :lambda-list ,lambda-list
+		     :method-group-specs ,method-group-specs
+		     ,@(long-form-method-combination-args args)))
+	 (lambda-expression (apply #'method-combination-type-lambda initargs)))
+    (install-method-combination-type
+     name
+     (apply '%make-long-method-combination
+       :function (coerce-to-function lambda-expression) initargs))))
+
+(defun declarationp (expr)
+  (and (consp expr) (eq (car expr) 'DECLARE)))
+
+(defun long-form-method-combination-args (args)
+  ;; define-method-combination name lambda-list (method-group-specifier*) args
+  ;; args ::= [(:arguments . args-lambda-list)]
+  ;;          [(:generic-function generic-function-symbol)]
+  ;;          [(:method-combination-class mc-class)]
+  ;;          [(:method-combination-type-class mct-class initargs*)]
+  ;;          [[declaration* | documentation]] form*
+  (let ((rest args))
+    (labels ((nextp (key) (and (consp (car rest)) (eq key (caar rest))))
+	     (args-lambda-list ()
+	       (when (nextp :arguments)
+		 (prog1 (cdr (car rest)) (setq rest (cdr rest)))))
+	     (generic-function-symbol ()
+	       (if (nextp :generic-function)
+		 (prog1 (second (car rest)) (setq rest (cdr rest)))
+		 (gensym)))
+	     (method-combination-class ()
+	       (if (nextp :method-combination-class)
+		 (prog1 (second (car rest)) (setq rest (cdr rest)))
+		 'long-method-combination))
+	     (method-combination-type-class ()
+	       (if (nextp :method-combination-type-class)
+		 (prog1 (cdr (car rest)) (setq rest (cdr rest)))
+		 (list 'long-method-combination-type)))
+	     (declaration* ()
+	       (let ((end (position-if-not #'declarationp rest)))
+		 (when end
+		   (prog1 (subseq rest 0 end) (setq rest (nthcdr end rest))))))
+	     (documentation? ()
+	       (when (stringp (car rest))
+		 (prog1 (car rest) (setq rest (cdr rest)))))
+	     (form* () rest))
+      (let ((declarations '()))
+	`(:args-lambda-list ,(args-lambda-list)
+	  :generic-function-symbol ,(generic-function-symbol)
+	  :method-combination-class ,(method-combination-class)
+	  :method-combination-type-class ,(method-combination-type-class)
+	  :documentation ,(prog2 (setq declarations (declaration*))
+			      (documentation?))
+	  :declarations (,@declarations ,@(declaration*))
+	  :forms ,(form*))))))
+
+(defun %make-long-method-combination
+    (&key name lambda-list
+	  method-combination-class method-combination-type-class
+	  documentation
+	  function
+     &allow-other-keys
+     &aux (mc-class (find-class method-combination-class))
+	  (mct-class (find-class (car method-combination-type-class))))
+  (let ((new (apply #'make-instance mct-class
+		    :direct-superclasses (list mc-class)
+		    :type-name name
+		    :lambda-list lambda-list
+		    :effective-method-builder function
+		    (cdr method-combination-type-class))))
+    (setf (slot-value new 'sys:%documentation) documentation)
+    (setf (slot-value new '%constructor)
+	  (lambda (options) (funcall #'make-instance new :options options)))
+    new))
 
 
 (defmethod validate-superclass

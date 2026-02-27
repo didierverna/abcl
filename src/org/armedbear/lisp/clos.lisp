@@ -1003,81 +1003,6 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
   (make-hash-table :test #'eq)
   "Cached sets of allowable initargs, keyed on the class they belong to.")
 
-(defun expand-long-defcombin (name args)
-  (destructuring-bind (lambda-list method-groups &rest body) args
-    `(apply #'define-long-form-method-combination
-            ',name
-            ',lambda-list
-            (list ,@(mapcar #'canonicalize-method-group-spec method-groups))
-            ',body)))
-
-;;; The class method-combination and its subclasses are defined in
-;;; StandardClass.java, but we cannot use make-instance and slot-value
-;;; yet.
-
-(defun %make-long-method-combination (&key name documentation lambda-list
-                                       method-group-specs args-lambda-list
-                                       generic-function-symbol function
-                                       arguments declarations forms)
-  (let ((instance (std-allocate-instance (find-class 'long-method-combination))))
-    (setf (std-slot-value instance 'sys::name) name)
-    (setf (std-slot-value instance 'sys:%documentation) documentation)
-    (setf (std-slot-value instance 'sys::lambda-list) lambda-list)
-    (setf (std-slot-value instance 'method-group-specs) method-group-specs)
-    (setf (std-slot-value instance 'args-lambda-list) args-lambda-list)
-    (setf (std-slot-value instance 'generic-function-symbol)
-          generic-function-symbol)
-    (setf (std-slot-value instance 'function) function)
-    (setf (std-slot-value instance 'arguments) arguments)
-    (setf (std-slot-value instance 'declarations) declarations)
-    (setf (std-slot-value instance 'forms) forms)
-    (setf (std-slot-value instance 'options) nil)
-    instance))
-
-(defun method-combination-documentation (method-combination)
-  (check-type method-combination method-combination)
-  (std-slot-value method-combination 'sys:%documentation))
-
-(defun short-method-combination-operator (method-combination)
-  (check-type method-combination short-method-combination)
-  (std-slot-value method-combination 'operator))
-
-(defun short-method-combination-identity-with-one-argument (method-combination)
-  (check-type method-combination short-method-combination)
-  (std-slot-value method-combination 'identity-with-one-argument))
-
-(defun long-method-combination-lambda-list (method-combination)
-  (check-type method-combination long-method-combination)
-  (std-slot-value method-combination 'sys::lambda-list))
-
-(defun long-method-combination-method-group-specs (method-combination)
-  (check-type method-combination long-method-combination)
-  (std-slot-value method-combination 'method-group-specs))
-
-(defun long-method-combination-args-lambda-list (method-combination)
-  (check-type method-combination long-method-combination)
-  (std-slot-value method-combination 'args-lambda-list))
-
-(defun long-method-combination-generic-function-symbol (method-combination)
-  (check-type method-combination long-method-combination)
-  (std-slot-value method-combination 'generic-function-symbol))
-
-(defun long-method-combination-function (method-combination)
-  (check-type method-combination long-method-combination)
-  (std-slot-value method-combination 'function))
-
-(defun long-method-combination-arguments (method-combination)
-  (check-type method-combination long-method-combination)
-  (std-slot-value method-combination 'arguments))
-
-(defun long-method-combination-declarations (method-combination)
-  (check-type method-combination long-method-combination)
-  (std-slot-value method-combination 'declarations))
-
-(defun long-method-combination-forms (method-combination)
-  (check-type method-combination long-method-combination)
-  (std-slot-value method-combination 'forms))
-
 
 ;;;
 ;;; long form of define-method-combination (from Sacla and XCL)
@@ -1399,50 +1324,6 @@ Will not modify existing classes to avoid breaking std-generic-function-p."
                                                   ',args-var ,emf-form)))
               (apply #'method-combination-type-lambda-with-args-emf all-args))))))
 
-(defun declarationp (expr)
-  (and (consp expr) (eq (car expr) 'DECLARE)))
-
-(defun long-form-method-combination-args (args)
-  ;; define-method-combination name lambda-list (method-group-specifier*) args
-  ;; args ::= [(:arguments . args-lambda-list)]
-  ;;          [(:generic-function generic-function-symbol)]
-  ;;          [[declaration* | documentation]] form*
-  (let ((rest args))
-    (labels ((nextp (key) (and (consp (car rest)) (eq key (caar rest))))
-             (args-lambda-list ()
-               (when (nextp :arguments)
-                 (prog1 (cdr (car rest)) (setq rest (cdr rest)))))
-             (generic-function-symbol ()
-                (if (nextp :generic-function)
-                    (prog1 (second (car rest)) (setq rest (cdr rest)))
-                    (gensym)))
-             (declaration* ()
-               (let ((end (position-if-not #'declarationp rest)))
-                 (when end
-                   (prog1 (subseq rest 0 end) (setq rest (nthcdr end rest))))))
-             (documentation? ()
-               (when (stringp (car rest))
-                 (prog1 (car rest) (setq rest (cdr rest)))))
-             (form* () rest))
-      (let ((declarations '()))
-        `(:args-lambda-list ,(args-lambda-list)
-                            :generic-function-symbol ,(generic-function-symbol)
-                            :documentation ,(prog2 (setq declarations (declaration*))
-                                              (documentation?))
-                            :declarations (,@declarations ,@(declaration*))
-                            :forms ,(form*))))))
-
-(defun define-long-form-method-combination (name lambda-list method-group-specs
-                                                 &rest args)
-  (let* ((initargs `(:name ,name
-                     :lambda-list ,lambda-list
-                     :method-group-specs ,method-group-specs
-                     ,@(long-form-method-combination-args args)))
-         (lambda-expression (apply #'method-combination-type-lambda initargs)))
-    (setf (get name 'method-combination-object)
-          (apply '%make-long-method-combination
-                 :function (coerce-to-function lambda-expression) initargs))
-    name))
 
 ;; #### NOTE: ABCL historically signals an error if a method combination is
 ;; not found here whereas SBCL just returns NIL (but later on, complains that
@@ -1465,20 +1346,6 @@ The GENERIC-FUNCTION argument is ignored."
 	       (setf (gethash options (method-combination-type-%instances type))
 		     (funcall (method-combination-%constructor type) options)))))))
 
-#+()((typep mc 'long-method-combination)
- (make-instance
-  'long-method-combination
-  :name name
-  :documentation (method-combination-documentation mc)
-  :lambda-list (long-method-combination-lambda-list mc)
-  :method-group-specs (long-method-combination-method-group-specs mc)
-  :args-lambda-list (long-method-combination-args-lambda-list mc)
-  :generic-function-symbol (long-method-combination-generic-function-symbol mc)
-  :function (long-method-combination-function mc)
-  :arguments (long-method-combination-arguments mc)
-  :declarations (long-method-combination-declarations mc)
-  :forms (long-method-combination-forms mc)
-  :options options))
 
 (declaim (notinline find-method-combination))
 (defun find-method-combination (gf name options)
@@ -2670,8 +2537,9 @@ to ~S with argument list ~S."
                           (dolist (after reverse-afters)
                             (funcall (method-function after) args nil))))))))))
       (long-method-combination-p
-       (let ((function (long-method-combination-function method-combination))
-             (arguments (slot-value method-combination 'options)))
+       (let ((function (long-method-combination-type-%effective-method-builder
+			(class-of method-combination)))
+             (arguments (method-combination-options method-combination)))
          (assert function)
          (setf emf-form
                (if arguments
