@@ -268,12 +268,18 @@ LONG-METHOD-COMBINATION-TYPE."
   (setf (gethash nil (method-combination-type-%instances ssmc)) smc)
   (setf (gethash 'standard *method-combination-types*) ssmc)
   (setq *the-standard-method-combination* smc)
-  ;;  (print "### Size of cache:")
-  ;;  (princ (length (method-combination-%generic-functions smc)))
-  ;;  (terpri)
-  #+()(mapc (lambda (gf) (setf (std-slot-value gf 'sys::%method-combination) smc))
-	(method-combination-%generic-functions smc)))
-
+  #+()(progn
+	(format t "### Size of initial generic functions cache: ~A~%"
+	  (length (method-combination-%generic-functions smc)))
+	(let ((i 0))
+	  (dolist (gf (method-combination-%generic-functions smc))
+	    (format t "### ~A: ~A~%" i (generic-function-name gf))
+	    (incf i))))
+  (mapc (lambda (gf)
+	  ;; #### FIXME: there's something special about this one:
+	  (unless (eq gf #'slot-value-using-class)
+	    (setf (slot-value gf 'sys::%method-combination) smc)))
+    (method-combination-%generic-functions smc)))
 
 (defmacro define-method-combination (&whole form name &rest args)
   (if (and (cddr form) (listp (caddr form)))
