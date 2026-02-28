@@ -379,11 +379,15 @@ LONG-METHOD-COMBINATION-TYPE."
 	  standard-method-combination
 	  short-method-combination
 	  long-method-combination
+	  method-combination-options
+	  find-method-combination
 	  method-combination-type
 	  standard-method-combination-type
 	  short-method-combination-type
+	  short-method-combination-type-operator
+	  short-method-combination-type-identity-with-one-argument
 	  long-method-combination-type
-          find-method-combination
+	  find-method-combination-type
 	  update-generic-function-for-redefined-method-combination
           extract-lambda-list
           extract-specializer-names

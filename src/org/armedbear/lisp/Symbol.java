@@ -3037,16 +3037,24 @@ public class Symbol extends LispObject implements java.io.Serializable
     PACKAGE_MOP.addExternalSymbol("SHORT-METHOD-COMBINATION");
   public static final Symbol LONG_METHOD_COMBINATION =
     PACKAGE_MOP.addExternalSymbol("LONG-METHOD-COMBINATION");
+  public static final Symbol METHOD_COMBINATION_OPTIONS =
+    PACKAGE_MOP.addExternalSymbol("METHOD-COMBINATION-OPTIONS");
+  public static final Symbol METHOD_COMBINATION_TYPE =
+    PACKAGE_MOP.addExternalSymbol("METHOD-COMBINATION-TYPE");
   public static final Symbol STANDARD_METHOD_COMBINATION_TYPE =
     PACKAGE_MOP.addExternalSymbol("STANDARD-METHOD-COMBINATION-TYPE");
   public static final Symbol SHORT_METHOD_COMBINATION_TYPE =
     PACKAGE_MOP.addExternalSymbol("SHORT-METHOD-COMBINATION-TYPE");
+  public static final Symbol SHORT_METHOD_COMBINATION_TYPE_OPERATOR =
+    PACKAGE_MOP.addExternalSymbol("SHORT-METHOD-COMBINATION-TYPE-OPERATOR");
+  public static final Symbol SHORT_METHOD_COMBINATION_TYPE_IDENTITY_WITH_ONE_ARGUMENT =
+    PACKAGE_MOP.addExternalSymbol("SHORT-METHOD-COMBINATION-TYPE-IDENTITY-WITH-ONE-ARGUMENT");
   public static final Symbol LONG_METHOD_COMBINATION_TYPE =
     PACKAGE_MOP.addExternalSymbol("LONG-METHOD-COMBINATION-TYPE");
-  public static final Symbol METHOD_COMBINATION_NAME =
-    PACKAGE_MOP.addInternalSymbol("METHOD-COMBINATION-NAME");
-  public static final Symbol METHOD_COMBINATION_DOCUMENTATION =
-    PACKAGE_MOP.addInternalSymbol("METHOD-COMBINATION-DOCUMENTATION");
+  public static final Symbol FIND_METHOD_COMBINATION_TYPE =
+    PACKAGE_MOP.addExternalSymbol("FIND-METHOD-COMBINATION-TYPE");
+  public static final Symbol UPDATE_GENERIC_FUNCTION_FOR_REDEFINED_METHOD_COMBINATION =
+    PACKAGE_MOP.addExternalSymbol("UPDATE-GENERIC-FUNCTION-FOR-REDEFINED-METHOD-COMBINATION");
 
   // Java interface.
   public static final Symbol JAVA_EXCEPTION =
