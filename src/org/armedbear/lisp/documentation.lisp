@@ -169,6 +169,20 @@
   (%set-documentation x 'structure new-value))
 
 
+;; #### NOTE: (DOCUMENTATION OBJECT T) is automatically supported on method
+;; combination types because we set the documentation class slot when we
+;; create them. Also, when there's no corresponding method combination type,
+;; we at least make DOCUMENTATION work on the symbol, but there's not much
+;; point in it anyway. -- didier
+
+(defmethod documentation
+    ((x method-combination-type) (doc-type (eql 'method-combination)))
+  (documentation x t))
+
+(defmethod (setf documentation)
+    (value (x method-combination-type) (doc-type (eql 'method-combination)))
+  (setf (documentation x t) value))
+
 (defmethod documentation ((x method-combination) (doc-type (eql 't)))
   (documentation (class-of x) t))
 
@@ -177,7 +191,10 @@
   (documentation (class-of x) t))
 
 (defmethod documentation ((x symbol) (doc-type (eql 'method-combination)))
-  (documentation (find-method-combination-type x) t))
+  (let ((mct (find-method-combination-type x nil)))
+    (if mct
+      (documentation mct t)
+      (%documentation x doc-type))))
 
 (defmethod (setf documentation)
     (new-value (x method-combination) (doc-type (eql 't)))
@@ -189,4 +206,7 @@
 
 (defmethod (setf documentation)
     (new-value (x symbol) (doc-type (eql 'method-combination)))
-  (setf (documentation (find-method-combination-type x) t) new-value))
+  (let ((mct (find-method-combination-type x nil)))
+    (if mct
+      (setf (documentation mct t) new-value)
+      (%set-documentation x doc-type new-value))))
