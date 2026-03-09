@@ -167,3 +167,26 @@
 (defmethod (setf documentation) (new-value (x symbol)
                                  (doc-type (eql 'structure)))
   (%set-documentation x 'structure new-value))
+
+
+(defmethod documentation ((x method-combination) (doc-type (eql 't)))
+  (documentation (class-of x) t))
+
+(defmethod documentation
+    ((x method-combination) (doc-type (eql 'method-combination)))
+  (documentation (class-of x) t))
+
+(defmethod documentation ((x symbol) (doc-type (eql 'method-combination)))
+  (documentation (find-method-combination-type x) t))
+
+(defmethod (setf documentation)
+    (new-value (x method-combination) (doc-type (eql 't)))
+  (setf (documentation (class-of x) t) new-value))
+
+(defmethod (setf documentation)
+    (new-value (x method-combination) (doc-type (eql 'method-combination)))
+  (setf (documentation (class-of x) t) new-value))
+
+(defmethod (setf documentation)
+    (new-value (x symbol) (doc-type (eql 'method-combination)))
+  (setf (documentation (find-method-combination-type x) t) new-value))

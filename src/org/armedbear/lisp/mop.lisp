@@ -258,7 +258,7 @@ LONG-METHOD-COMBINATION-TYPE."
 (let* ((ssmc (make-instance 'standard-method-combination-type
 	       :direct-superclasses (list (find-class 'standard-method-combination))
 	       :type-name 'standard
-	       :documentation "The standard method combination type."))
+	       :documentation "The standard method combination."))
        (smc (make-instance ssmc :options nil)))
   (setf (method-combination-%generic-functions smc)
 	(std-slot-value *the-standard-method-combination* '%generic-functions))
