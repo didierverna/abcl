@@ -74,10 +74,7 @@
     :reader method-combination-%constructor)
    (%instances
     :initform (make-hash-table :test #'equal)
-    :reader method-combination-type-%instances)
-   (sys::%documentation
-    :initarg :documentation
-    :initform nil)))
+    :reader method-combination-type-%instances)))
 
 
 (defparameter *method-combination-types* (make-hash-table))
