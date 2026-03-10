@@ -88,7 +88,7 @@ found. Otherwise, return NIL."
 	(error "There is no method combination type named ~A." name))))
 
 (defun install-method-combination-type
-    (name new &aux (old (find-method-combination-type name nil)))
+    (name new documentation &aux (old (find-method-combination-type name nil)))
   "Register NEW method combination type under NAME.
 This function takes care of any potential redefinition of an existing method
 combination type."
@@ -99,6 +99,7 @@ combination type."
 	       (change-class combination new))
 	     (method-combination-type-%instances new)))
   (setf (gethash name *method-combination-types*) new)
+  (%set-documentation name 'method-combination documentation)
   name)
 
 
@@ -145,10 +146,10 @@ SHORT-METHOD-COMBINATION-TYPE."
 			  :operator ',operator
 			  :identity-with-one-argument ',identity-with-one-argument
 			  (cdr ',mct-spec))))
-       (setf (slot-value .new. 'sys:%documentation) ',documentation)
+       (setf (slot-value .new. 'sys:%documentation) ,documentation)
        (setf (slot-value .new. '%constructor)
 	     (lambda (options) (make-instance .new. :options options)))
-       (install-method-combination-type ',name .new.))))
+       (install-method-combination-type ',name .new. ,documentation))))
 
 
 
@@ -180,11 +181,13 @@ LONG-METHOD-COMBINATION-TYPE."
 		     :lambda-list ,lambda-list
 		     :method-group-specs ,method-group-specs
 		     ,@(long-form-method-combination-args args)))
-	 (lambda-expression (apply #'method-combination-type-lambda initargs)))
+	 (lambda-expression (apply #'method-combination-type-lambda initargs))
+	 (documentation (getf initargs :documentation)))
     (install-method-combination-type
      name
      (apply '%make-long-method-combination
-       :function (coerce-to-function lambda-expression) initargs))))
+       :function (coerce-to-function lambda-expression) initargs)
+     documentation)))
 
 (defun declarationp (expr)
   (and (consp expr) (eq (car expr) 'DECLARE)))
