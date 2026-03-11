@@ -3053,6 +3053,8 @@ public class Symbol extends LispObject implements java.io.Serializable
     PACKAGE_MOP.addExternalSymbol("LONG-METHOD-COMBINATION-TYPE");
   public static final Symbol FIND_METHOD_COMBINATION_TYPE =
     PACKAGE_MOP.addExternalSymbol("FIND-METHOD-COMBINATION-TYPE");
+  public static final Symbol FIND_METHOD_COMBINATION_INSTANCE =
+    PACKAGE_MOP.addExternalSymbol("FIND-METHOD-COMBINATION-INSTANCE");
   public static final Symbol UPDATE_GENERIC_FUNCTION_FOR_REDEFINED_METHOD_COMBINATION =
     PACKAGE_MOP.addExternalSymbol("UPDATE-GENERIC-FUNCTION-FOR-REDEFINED-METHOD-COMBINATION");
 
