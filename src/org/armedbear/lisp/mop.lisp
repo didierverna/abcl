@@ -297,6 +297,19 @@ LONG-METHOD-COMBINATION-TYPE."
 (define-method-combination progn  :identity-with-one-argument t)
 
 
+(defmethod print-object ((type standard-method-combination-type) stream)
+  (print-unreadable-object (type stream :type t :identity t)
+    (format stream "~S ~:S"
+      (method-combination-type-name type)
+      (method-combination-type-lambda-list type)))
+  type)
+
+(defmethod print-object ((combination standard-method-combination) stream)
+  (print-unreadable-object (combination stream :type t :identity t)
+    (format stream "~:S"
+      (method-combination-options combination)))
+  combination)
+
 
 (export '(;; classes
           funcallable-standard-object
