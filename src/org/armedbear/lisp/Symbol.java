@@ -3043,6 +3043,10 @@ public class Symbol extends LispObject implements java.io.Serializable
     PACKAGE_MOP.addExternalSymbol("METHOD-COMBINATION-TYPE");
   public static final Symbol STANDARD_METHOD_COMBINATION_TYPE =
     PACKAGE_MOP.addExternalSymbol("STANDARD-METHOD-COMBINATION-TYPE");
+  public static final Symbol METHOD_COMBINATION_TYPE_NAME =
+    PACKAGE_MOP.addExternalSymbol("METHOD-COMBINATION-TYPE-NAME");
+  public static final Symbol METHOD_COMBINATION_TYPE_LAMBDA_LIST =
+    PACKAGE_MOP.addExternalSymbol("METHOD-COMBINATION-TYPE-LAMBDA-LIST");
   public static final Symbol SHORT_METHOD_COMBINATION_TYPE =
     PACKAGE_MOP.addExternalSymbol("SHORT-METHOD-COMBINATION-TYPE");
   public static final Symbol SHORT_METHOD_COMBINATION_TYPE_OPERATOR =

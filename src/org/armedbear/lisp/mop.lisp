@@ -389,7 +389,6 @@ LONG-METHOD-COMBINATION-TYPE."
 	  find-method-combination
 	  find-method-combination-instance
 	  method-combination-type
-	  method-combination-type
 	  standard-method-combination-type
 	  short-method-combination-type
 	  short-method-combination-type-operator
