@@ -3767,10 +3767,15 @@ or T when any keyword is acceptable due to presence of
                                          &rest all-keys)
   (apply #'std-after-reinitialization-for-classes class all-keys))
 
-(defmethod reinitialize-instance :before ((gf standard-generic-function)
-                                          &key
-                                            (lambda-list nil lambda-list-supplied-p)
-                                          &allow-other-keys)
+(defmethod reinitialize-instance :before
+    ((gf standard-generic-function)
+     &key (lambda-list nil lambda-list-supplied-p)
+	  (method-combination nil method-combination-supplied-p)
+     &allow-other-keys)
+  (let ((mc (generic-function-method-combination gf)))
+    (when (and method-combination-supplied-p (not (eq method-combination mc)))
+      (setf (slot-value mc '%generic-functions)
+	    (remove gf (slot-value mc '%generic-functions)))))
   (when lambda-list-supplied-p
     (unless (or (null (generic-function-methods gf))
                 (lambda-lists-congruent-p lambda-list
@@ -4203,13 +4208,15 @@ or T when any keyword is acceptable due to presence of
             (getf plist :optional-args))
       (setf (std-slot-value instance 'sys::argument-precedence-order)
             (or (and a-p-o-p argument-precedence-order) required-args))))
-  (unless (typep (generic-function-method-combination instance)
-                 'method-combination)
-    ;; this fixes (make-instance 'standard-generic-function) -- the
-    ;; constructor of StandardGenericFunction sets this slot to '(standard)
-    (setf (std-slot-value instance 'sys::%method-combination)
-          (find-method-combination
-           instance (car method-combination) (cdr method-combination))))
+  (let ((mc (generic-function-method-combination instance)))
+    (unless (typep mc 'method-combination)
+      ;; this fixes (make-instance 'standard-generic-function) -- the
+      ;; constructor of StandardGenericFunction sets this slot to '(standard)
+      (setq mc (find-method-combination instance
+		 (car method-combination) (cdr method-combination)))
+      (setf (std-slot-value instance 'sys::%method-combination) mc))
+    (setf (std-slot-value mc '%generic-functions)
+	  (push instance (std-slot-value mc '%generic-functions))))
   (finalize-standard-generic-function instance))
 
 ;;; Readers for generic function metaobjects
