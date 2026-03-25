@@ -300,14 +300,14 @@ LONG-METHOD-COMBINATION-TYPE."
 (defmethod print-object ((type standard-method-combination-type) stream)
   (print-unreadable-object (type stream :type t :identity t)
     (format stream "~S ~:S"
-      (method-combination-type-name type)
-      (method-combination-type-lambda-list type)))
+      (std-slot-value type 'type-name)
+      (std-slot-value type 'lambda-list)))
   type)
 
 (defmethod print-object ((combination standard-method-combination) stream)
   (print-unreadable-object (combination stream :type t :identity t)
     (format stream "~:S"
-      (method-combination-options combination)))
+      (std-slot-value combination 'options)))
   combination)
 
 
