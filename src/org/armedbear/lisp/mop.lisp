@@ -263,9 +263,9 @@ LONG-METHOD-COMBINATION-TYPE."
 	       :type-name 'standard
 	       :documentation "The standard method combination."))
        (smc (make-instance ssmc :options nil)))
-  (setf (method-combination-%generic-functions smc)
+  (setf (std-slot-value smc '%generic-functions)
 	(std-slot-value *the-standard-method-combination* '%generic-functions))
-  (setf (gethash nil (method-combination-type-%instances ssmc)) smc)
+  (setf (gethash nil (std-slot-value ssmc '%instances)) smc)
   (setf (gethash 'standard *method-combination-types*) ssmc)
   (setq *the-standard-method-combination* smc)
   #+()(progn
