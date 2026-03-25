@@ -181,11 +181,11 @@
 
 (defmethod documentation
     ((x method-combination-type) (doc-type (eql 'method-combination)))
-  (documentation (method-combination-type-name x) 'method-combination))
+  (documentation (std-slot-value x 'type-name) 'method-combination))
 
 (defmethod (setf documentation)
     (value (x method-combination-type) (doc-type (eql 'method-combination)))
-  (setf (documentation (method-combination-type-name x) 'method-combination)
+  (setf (documentation (std-slot-value x 'type-name) 'method-combination)
 	value))
 
 (defmethod documentation

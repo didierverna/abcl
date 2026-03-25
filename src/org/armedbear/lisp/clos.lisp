@@ -1342,9 +1342,9 @@ The GENERIC-FUNCTION argument is ignored."
 	 *the-standard-method-combination*)
 	(t
 	 (let ((type (find-method-combination-type name)))
-	   (or (gethash options (method-combination-type-%instances type))
-	       (setf (gethash options (method-combination-type-%instances type))
-		     (funcall (method-combination-%constructor type) options)))))))
+	   (or (gethash options (std-slot-value type '%instances))
+	       (setf (gethash options (std-slot-value type '%instances))
+		     (funcall (std-slot-value type '%constructor) options)))))))
 
 
 (declaim (notinline find-method-combination))
@@ -1361,9 +1361,9 @@ found. Otherwise, return NIL. Note that when a NAMEd method combination type
 exists, asking for a new set of (conformant) OPTIONS will always instantiate
 the combination again, regardless of the value of ERRORP."
   (when type
-    (or (gethash options (method-combination-type-%instances type))
-	(setf (gethash options (method-combination-type-%instances type))
-	      (funcall (method-combination-%constructor type) options)))))
+    (or (gethash options (std-slot-value type '%instances))
+	(setf (gethash options (std-slot-value type '%instances))
+	      (funcall (std-slot-value type '%constructor) options)))))
 
 (defparameter *the-standard-method-combination*
   (let ((instance (std-allocate-instance (find-class 'early-method-combination))))
@@ -2478,7 +2478,7 @@ to ~S with argument list ~S."
 	   (if #+()(eq method-combination *the-standard-method-combination*)
 	       (typep method-combination 'early-method-combination)
 	     'standard
-	     (method-combination-type-name (class-of method-combination))))
+	     (std-slot-value (class-of method-combination) 'type-name)))
          (options (slot-value method-combination 'options))
          (order (car options))
          (primaries '())
@@ -2551,9 +2551,8 @@ to ~S with argument list ~S."
                           (dolist (after reverse-afters)
                             (funcall (method-function after) args nil))))))))))
       (long-method-combination-p
-       (let ((function (long-method-combination-type-%effective-method-builder
-			(class-of method-combination)))
-             (arguments (method-combination-options method-combination)))
+       (let ((function (std-slot-value (class-of method-combination) '%effective-method-builder))
+             (arguments (std-slot-value method-combination 'options)))
          (assert function)
          (setf emf-form
                (if arguments
@@ -2563,8 +2562,8 @@ to ~S with argument list ~S."
        (unless (typep method-combination 'short-method-combination)
          (error "Unsupported method combination type ~A." mc-name))
        (let* ((mct (class-of method-combination))
-	      (operator (short-method-combination-type-operator mct))
-              (ioa (short-method-combination-type-identity-with-one-argument mct)))
+	      (operator (std-slot-value mct 'operator))
+              (ioa (std-slot-value mct 'identity-with-one-argument)))
          (setf emf-form
                (if (and ioa (null (cdr primaries)))
                    (generate-emf-lambda (method-function (car primaries)) nil)
@@ -3774,8 +3773,8 @@ or T when any keyword is acceptable due to presence of
      &allow-other-keys)
   (let ((mc (generic-function-method-combination gf)))
     (when (and method-combination-supplied-p (not (eq method-combination mc)))
-      (setf (slot-value mc '%generic-functions)
-	    (remove gf (slot-value mc '%generic-functions)))))
+      (setf (std-slot-value mc '%generic-functions)
+	    (remove gf (std-slot-value mc '%generic-functions)))))
   (when lambda-list-supplied-p
     (unless (or (null (generic-function-methods gf))
                 (lambda-lists-congruent-p lambda-list
