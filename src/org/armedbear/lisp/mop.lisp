@@ -93,11 +93,11 @@ found. Otherwise, return NIL."
 This function takes care of any potential redefinition of an existing method
 combination type."
   (when old
-    (setf (slot-value new '%instances) (method-combination-type-%instances old))
+    (setf (std-slot-value new '%instances) (std-slot-value old '%instances))
     (maphash (lambda (options combination)
 	       (declare (ignore options))
 	       (change-class combination new))
-	     (method-combination-type-%instances new)))
+	     (std-slot-value new '%instances)))
   (setf (gethash name *method-combination-types*) new)
   (%set-documentation name 'method-combination documentation)
   name)
