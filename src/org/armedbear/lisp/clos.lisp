@@ -2470,7 +2470,7 @@ to ~S with argument list ~S."
                  next-method-form)))
           next-method-list))
 
-(defun std-compute-effective-method (gf method-combination methods)
+(defun std-compute-effective-method (gf method-combination methods &aux mct)
   (assert (typep method-combination 'method-combination))
   (let* ((mc-name
 	   ;; Make this work on the early standard method combination.
@@ -2478,8 +2478,10 @@ to ~S with argument list ~S."
 	   (if #+()(eq method-combination *the-standard-method-combination*)
 	       (typep method-combination 'early-method-combination)
 	     'standard
-	     (std-slot-value (class-of method-combination) 'type-name)))
-         (options (slot-value method-combination 'options))
+	     (progn
+	       (setq mct (class-of method-combination))
+	       (std-slot-value mct 'type-name))))
+         (options (std-slot-value method-combination 'options))
          (order (car options))
          (primaries '())
          (arounds '())
@@ -2551,7 +2553,7 @@ to ~S with argument list ~S."
                           (dolist (after reverse-afters)
                             (funcall (method-function after) args nil))))))))))
       (long-method-combination-p
-       (let ((function (std-slot-value (class-of method-combination) '%effective-method-builder))
+       (let ((function (std-slot-value mct '%effective-method-builder))
              (arguments (std-slot-value method-combination 'options)))
          (assert function)
          (setf emf-form
@@ -2561,8 +2563,7 @@ to ~S with argument list ~S."
       (t
        (unless (typep method-combination 'short-method-combination)
          (error "Unsupported method combination type ~A." mc-name))
-       (let* ((mct (class-of method-combination))
-	      (operator (std-slot-value mct 'operator))
+       (let* ((operator (std-slot-value mct 'operator))
               (ioa (std-slot-value mct 'identity-with-one-argument)))
          (setf emf-form
                (if (and ioa (null (cdr primaries)))
