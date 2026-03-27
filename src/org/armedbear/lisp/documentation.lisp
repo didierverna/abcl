@@ -197,9 +197,9 @@
   (setf (documentation (class-of x) 'method-combination) new-value))
 
 (defmethod documentation
-    ((x method-combination) (doc-type (eql 't)))
-  (documentation (class-of x) 'method-combination))
+    ((x method-combination) (doc-type (eql t)))
+  (documentation (class-of x) t))
 
 (defmethod (setf documentation)
-    (new-value (x method-combination) (doc-type (eql 't)))
-  (setf (documentation (class-of x) 'method-combination) new-value))
+    (new-value (x method-combination) (doc-type (eql t)))
+  (setf (documentation (class-of x) t) new-value))
